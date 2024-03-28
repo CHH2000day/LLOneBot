@@ -141,7 +141,11 @@ export class OB11Constructor {
                 const url = element.picElement.originImageUrl
                 const fileMd5 = element.picElement.md5HexStr
                 if (url) {
-                    message_data["data"]["url"] = IMAGE_HTTP_HOST + url
+                    if (url.startsWith("/download")) {
+                        message_data["data"]["url"] = IMAGE_HTTP_HOST + url + "&rkey=CAQSKAB6JWENi5LMk0kc62l8Pm3Jn1dsLZHyRLAnNmHGoZ3y_gDZPqZt-64"
+                    }else {
+                        message_data["data"]["url"] = IMAGE_HTTP_HOST + url
+                    }
                 } else if (fileMd5 && element.picElement.fileUuid.indexOf("_") === -1) { // fileuuid有下划线的是Linux发送的，这个url是另外的格式，目前尚未得知如何组装
                     message_data["data"]["url"] = `${IMAGE_HTTP_HOST}/gchatpic_new/0/0-0-${fileMd5.toUpperCase()}/0`
                 }
@@ -208,10 +212,10 @@ export class OB11Constructor {
             } else if (element.marketFaceElement) {
                 message_data["type"] = OB11MessageDataType.mface;
                 message_data["data"]["text"] = element.marketFaceElement.faceName;
-            } else if (element.markdownElement){
+            } else if (element.markdownElement) {
                 message_data["type"] = OB11MessageDataType.markdown;
                 message_data["data"]["data"] = element.markdownElement.content;
-            } else if (element.multiForwardMsgElement){
+            } else if (element.multiForwardMsgElement) {
                 message_data["type"] = OB11MessageDataType.forward;
                 message_data["data"]["id"] = msg.msgId
             }
@@ -232,7 +236,7 @@ export class OB11Constructor {
         if (msg.chatType !== ChatType.group) {
             return;
         }
-        if (msg.senderUin){
+        if (msg.senderUin) {
             let member = await getGroupMember(msg.peerUid, msg.senderUin);
             if (member && member.cardName !== msg.sendMemberName) {
                 const event = new OB11GroupCardEvent(parseInt(msg.peerUid), parseInt(msg.senderUin), msg.sendMemberName, member.cardName)
@@ -282,8 +286,7 @@ export class OB11Constructor {
                     if (memberUin && adminUin) {
                         return new OB11GroupBanEvent(parseInt(msg.peerUid), parseInt(memberUin), parseInt(adminUin), duration, sub_type);
                     }
-                }
-                else if (groupElement.type == TipGroupElementType.kicked){
+                } else if (groupElement.type == TipGroupElementType.kicked) {
                     log("收到我被踢出提示", groupElement)
                     const adminUin = (await getGroupMember(msg.peerUid, groupElement.adminUid))?.uin || (await NTQQUserApi.getUserDetailInfo(groupElement.adminUid))?.uin
                     if (adminUin) {
